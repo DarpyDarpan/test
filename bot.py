@@ -1,3 +1,4 @@
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -38,28 +39,34 @@ async def config_command(interaction: discord.Interaction, category_id: str, vie
 
 @bot.tree.command(name="list")
 async def list_command(interaction: discord.Interaction, hypixel_username: str, price: str, extra_info: str = None, ping_role: bool = False):
+    # Defer the response to avoid timeouts
+    await interaction.response.defer()
+
     # Fetch player data from SkyCrypt API
     try:
         url = f"https://sky.shiiyu.moe/api/v2/profile/{hypixel_username}"
         response = requests.get(url)
         data = response.json()
 
+        # Print the entire API response for debugging
+        print(data)
+
         # Check if the user exists and has a SkyBlock profile
         profiles = data.get('profiles')
         if not profiles:
-            await interaction.response.send_message(f"No SkyBlock profile found for {hypixel_username}.")
+            await interaction.followup.send(f"No SkyBlock profile found for {hypixel_username}.")
             return
 
         # Use the first profile for simplicity
         profile_data = list(profiles.values())[0]
         stats = profile_data.get('data', {}).get('stats', {})
 
-        # Example stats (you may adjust these according to SkyCrypt's API)
+        # Adjust these keys based on the API response structure
         skyblock_level = stats.get('level', 'N/A')
-        skill_average = stats.get('average_skill_level', 'N/A')
+        skill_average = stats.get('averageSkillLevel', 'N/A')
 
     except Exception as e:
-        await interaction.response.send_message(f"Failed to retrieve data: {str(e)}")
+        await interaction.followup.send(f"Failed to retrieve data: {str(e)}")
         return
 
     # Create channel
@@ -87,7 +94,7 @@ async def list_command(interaction: discord.Interaction, hypixel_username: str, 
         await channel.send(view_role.mention)
 
     await channel.send(embed=embed)
-    await interaction.response.send_message(f"Channel created: {channel.mention}")
+    await interaction.followup.send(f"Channel created: {channel.mention}")
 
 # Run the bot with your token
 bot.run('YOUR_BOT_TOKEN')
